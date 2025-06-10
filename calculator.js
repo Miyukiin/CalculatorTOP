@@ -15,17 +15,7 @@ let result = null;
 const screenDisplay = document.querySelector("div.calculator-screen p");
 
 const equalsButton = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value == "=");
-equalsButton[0].addEventListener("click", () => {
-    rpnStack = createRPNStack(screenDisplay.textContent);
-    result = evaluateRPNStack(rpnStack);
-    if(result){
-        resultFlag = true;
-    }
-    else{
-        return "ERROR: CANNOT OBTAIN RESULT."
-    }
-    updateCalculatorScreen(result);
-});
+equalsButton[0].addEventListener("click", () => evaluateExpression());
 
 const clearButton = document.querySelector("button#calculator-clear-button");
 clearButton.addEventListener("click", () => clearCalculatorScreen());
@@ -37,8 +27,75 @@ buttonsArray.map((item) => {
     })
 })
 
+document.addEventListener("keydown", (e) => {
+    switch(e.key){
+        case "0":
+            updateCalculatorScreen("0");
+            break;
+        case "1":
+            updateCalculatorScreen("1");
+            break;
+        case "2":
+            updateCalculatorScreen("2");
+            break;
+        case "3":
+            updateCalculatorScreen("3");
+            break;
+        case "4":
+            updateCalculatorScreen("4");
+            break;
+        case "5":
+            updateCalculatorScreen("5");
+            break;
+        case "6":
+            updateCalculatorScreen("6");
+            break;
+        case "7":
+            updateCalculatorScreen("7");
+            break;
+        case "8":
+            updateCalculatorScreen("8");
+            break;
+        case "9":
+            updateCalculatorScreen("9");
+            break;
+        case "*":
+            updateCalculatorScreen("*");
+            break;
+        case "-":
+            updateCalculatorScreen("-");
+            break;
+        case "+":
+            updateCalculatorScreen("+");
+            break;
+        case "/":
+            updateCalculatorScreen("/");
+            break;
+        case "=":
+            evaluateExpression();
+            break;
+        case ".":
+            updateCalculatorScreen(".");
+            break;
+        default:
+            return;
+
+    }
+})
 
 // Functions 
+
+function evaluateExpression(){
+    rpnStack = createRPNStack(screenDisplay.textContent);
+    result = evaluateRPNStack(rpnStack);
+    if(result){
+        resultFlag = true;
+    }
+    else{
+        return "ERROR: CANNOT OBTAIN RESULT."
+    }
+    updateCalculatorScreen(result);
+}
 
 function add(a,b){
     return a+b;
