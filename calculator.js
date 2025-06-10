@@ -188,8 +188,8 @@ function createRPNStack(string){
 
     // Shunting Yard Algorithm. Tailored for */-+ operators. "32+4*5" ["3", "2", "+", "4", "*", "5"] -> ['32', '4', '56', '*', '+']
     for(let i=0;i<arrayOfCharacters.length;i++){
-        // Check is not an operator, and would be a number. If so, this is an operand lexeme.
-        if(!operatorsString.includes(arrayOfCharacters[i]) && !isNaN(parseInt(arrayOfCharacters[i]))){
+        // if char is not an operator and would be a number || is a period then this is an operand lexeme.
+        if((!operatorsString.includes(arrayOfCharacters[i]) && !isNaN(parseInt(arrayOfCharacters[i])) || arrayOfCharacters[i] == ".")){
             // Handle the case of the last operandToken.
             if(i == arrayOfCharacters.length - 1){
                 // Handle last operandLexeme is a single digit.
