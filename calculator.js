@@ -11,6 +11,7 @@ let expressionString = null;
 let rpnStack = [];
 let resultFlag = false;
 let result = null;
+let operatorFlag = false;
 
 const screenDisplay = document.querySelector("div.calculator-screen p");
 
@@ -23,56 +24,74 @@ clearButton.addEventListener("click", () => clearCalculatorScreen());
 const backSpaceButton = document.querySelector("button#calculator-backspace-button");
 backSpaceButton.addEventListener("click", () => backSpaceFunction())
 
-const buttonsArray = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value !== "=");
-buttonsArray.map((item) => {
+const NumberButtonsArray = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value !== "=" && !operatorsString.includes(item.value));
+NumberButtonsArray.map((item) => {
     item.addEventListener("click", (e) => {
+        checkOperatorFlagTrue();
         updateCalculatorScreen(e.currentTarget.value);
+    })
+})
+
+const OperatorButtonsArray = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value !== "=" && operatorsString.includes(item.value));
+OperatorButtonsArray.map((item) => {
+    item.addEventListener("click", (e) => {
+        checkOperatorFlagFalse(() => updateCalculatorScreen(e.currentTarget.value));
     })
 })
 
 document.addEventListener("keydown", (e) => {
     switch(e.key){
         case "0":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("0");
             break;
         case "1":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("1");
             break;
         case "2":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("2");
             break;
         case "3":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("3");
             break;
         case "4":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("4");
             break;
         case "5":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("5");
             break;
         case "6":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("6");
             break;
         case "7":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("7");
             break;
         case "8":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("8");
             break;
         case "9":
+            checkOperatorFlagTrue();
             updateCalculatorScreen("9");
             break;
         case "*":
-            updateCalculatorScreen("*");
+            checkOperatorFlagFalse(() => updateCalculatorScreen("*"));
             break;
         case "-":
-            updateCalculatorScreen("-");
+            checkOperatorFlagFalse(() => updateCalculatorScreen("-"));
             break;
         case "+":
-            updateCalculatorScreen("+");
+            checkOperatorFlagFalse(() => updateCalculatorScreen("+"));
             break;
         case "/":
-            updateCalculatorScreen("/");
+            checkOperatorFlagFalse(() => updateCalculatorScreen("/"));
             break;
         case "=":
             evaluateExpression();
@@ -206,6 +225,23 @@ function operate(operandOne, operatorSymbol, operandTwo){
 }
 
 // Utility Functions
+function checkOperatorFlagTrue(arrowFunction){
+    if(operatorFlag === true){
+        if(typeof arrowFunction === "function"){
+            arrowFunction();
+        }
+        operatorFlag = false;
+    }
+}
+
+function checkOperatorFlagFalse(arrowFunction){
+    if(operatorFlag === false){
+        if(typeof arrowFunction === "function"){
+            arrowFunction();
+        }
+        operatorFlag = true;
+    }
+}
 
 function peekStack(stack){
     return stack[stack.length - 1];
@@ -220,6 +256,7 @@ function resetVariables(){
     rpnStack = [];
     resultFlag = false;
     result = null;
+    operatorFlag = false;
 }
 
 function updateCalculatorScreen(textValue){
@@ -253,7 +290,13 @@ function backSpaceFunction(){
         return;
     }
     let text = screenDisplay.textContent;
-    screenDisplay.textContent = text.slice(1, text.length)
+    screenDisplay.textContent = text.slice(1, text.length);
+    console.log(screenDisplay);
+
+    // Handle cases where we backspace an operator. Allows operators to be inputted again.
+    if(operatorsString.includes(text[text.length - 1])){
+        checkOperatorFlagTrue();
+    }
     // If the are no more characters, call clearCalculatorScreen.
     if(screenDisplay.textContent == ""){
         clearCalculatorScreen();
