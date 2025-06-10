@@ -1,19 +1,14 @@
 
-let operandOne = null;
-let operatorSymbol = null;
-let operandTwo = null;
-
-
 const orderOfOperationsMap = {
-    "*": 1,
+    "*": 2,
     "/": 2,
-    "+": 3,
-    "-": 4,
+    "+": 1,
+    "-": 1,
 }
 const operatorsString = "*/+-";
 
 let expressionString = null;
-let expressionStack = [];
+let rpnStack = [];
 let resultFlag = false;
 let result = null;
 
@@ -21,8 +16,8 @@ const screenDisplay = document.querySelector("div.calculator-screen p");
 
 const equalsButton = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value == "=");
 equalsButton[0].addEventListener("click", () => {
-    preProcessExpression(screenDisplay.textContent);
-    result = operate(parseInt(operandOne), operatorSymbol, parseInt(operandTwo));
+    rpnStack = createRPNStack(screenDisplay.textContent);
+    result = evaluateRPNStack(rpnStack);
     if(result){
         resultFlag = true;
     }
@@ -61,6 +56,38 @@ function divide(a,b){
     return a/b;
 }
 
+
+function evaluateRPNStack(rpnStack){
+    let operandStack = [];
+    let operandOne = null;
+    let operandTwo = null;
+    let result = null;
+    
+    while (rpnStack.length !== 0){
+        // Check if stack item is a number and rpnStack length is > 1, if so, push to operandStack.
+        if(!isNaN(parseFloat(rpnStack[0])) && rpnStack.length > 1){
+            operandStack.push(rpnStack.shift());
+            continue;
+        }
+
+        // Handle case where the number is the last one in the stack.
+        else if(!isNaN(parseFloat(rpnStack[0])) && rpnStack.length == 1){
+            return result;
+        }
+        else{
+            // Pop the last two as operandTwo and operandOne respectively, and get operator.
+            operandTwo = parseFloat(operandStack.pop());
+            operandOne = parseFloat(operandStack.pop());
+            operatorSymbol = rpnStack[0];
+            // Remove Operator from the rpnStack
+            rpnStack.shift()
+            // Evaluate, and add back the result to the rpnStack
+            result = operate(operandOne, operatorSymbol, operandTwo);
+            rpnStack.unshift(String(result));
+        }
+    }
+}
+
 function operate(operandOne, operatorSymbol, operandTwo){
     switch(operatorSymbol){
         case("+"):
@@ -80,7 +107,7 @@ function updateCalculatorScreen(textValue){
     let text = textValue
 
     if(!typeof textValue === "number" && resultFlag == false){
-        text = parseInt(textValue);
+        text = parseFloat(textValue);
     }
     else if(resultFlag==true){
         text = " = " + result
@@ -96,42 +123,76 @@ function updateCalculatorScreen(textValue){
 
 }
 
+function createRPNStack(string){
+    let arrayOfCharacters = string.split("")
+    let operandToken = null;
+    let outputQueue = [];
+    let operatorStack = [];
+
+    // Shunting Yard Algorithm. Tailored for */-+ operators. "32+4*5" ["3", "2", "+", "4", "*", "5"] -> ['32', '4', '56', '*', '+']
+    for(let i=0;i<arrayOfCharacters.length;i++){
+        // Check is not an operator, and would be a number. If so, this is an operand lexeme.
+        if(!operatorsString.includes(arrayOfCharacters[i]) && !isNaN(parseInt(arrayOfCharacters[i]))){
+            // Handle the case of the last operandToken.
+            if(i == arrayOfCharacters.length - 1){
+                // Handle last operandLexeme is a single digit.
+                operandToken == null ? operandToken = arrayOfCharacters[i] : operandToken += arrayOfCharacters[i];
+                outputQueue.push(operandToken);
+                operandToken = null;
+            }
+            // If operand is null, assign current char to operand One. To avoid implicit conversion of null as a result of null + string operation.
+            else if (operandToken == null){
+                operandToken = arrayOfCharacters[i];
+                continue;
+            }
+            // Default case, just append the current char to the operandToken.
+            else{
+                operandToken += arrayOfCharacters[i];
+            }
+        }
+        // Check if character is an operator.
+        else if(operatorsString.includes(arrayOfCharacters[i])){
+            // Push operand token to the output queue and reset.
+            outputQueue.push(operandToken);
+            operandToken = null;
+
+            // While operatorStack is not empty, and there is an operator in the operatorStack with a higher or equal precedence.
+            // This ensures that higher precedence operators are evaluated first.
+            while(!operatorStack.length == 0 && getPrecedence(arrayOfCharacters[i]) <= getPrecedence(peekStack(operatorStack))){
+                outputQueue.push(operatorStack.pop());
+            }
+
+            // Push the operator to the operatorStack.
+            operatorStack.push(arrayOfCharacters[i]);
+        }
+    }
+    
+    // If there are no more tokens to be processed, construct final rpnStack;
+    while(!operatorStack.length == 0) {
+        outputQueue.push(operatorStack.pop());
+    }
+
+    return outputQueue;
+}
+
+// Utility Functions
+
+function peekStack(stack){
+    return stack[stack.length - 1];
+}
+
+function getPrecedence(char){
+    return operatorsString.includes(char) ? orderOfOperationsMap[char] : -1;
+}
+
 function resetVariables(){
-    operandOne = null;
-    operandTwo = null;
-    operatorSymbol = null;
     expressionString = null;
-    result = null;
+    rpnStack = [];
     resultFlag = false;
+    result = null;
 }
 
 function clearCalculatorScreen(){
     screenDisplay.textContent = "0.0";
     resetVariables();
-}
-
-function preProcessExpression(string){
-    let arrayOfCharacters = string.split("")
-    console.log(arrayOfCharacters);
-
-    for(let i=0;i<arrayOfCharacters.length;i++){
-        if(!operatorsString.includes(arrayOfCharacters[i]) && operatorSymbol === null){
-            if (operandOne == null){
-                operandOne = arrayOfCharacters[i];
-                continue;
-            }
-            operandOne += arrayOfCharacters[i];
-
-        }
-        else if (!operatorsString.includes(arrayOfCharacters[i]) && operatorSymbol !== null){
-            if (operandTwo == null){
-                operandTwo = arrayOfCharacters[i];
-                continue;
-            }
-            operandTwo += arrayOfCharacters[i];
-        }
-        else{
-            operatorSymbol = arrayOfCharacters[i];
-        }
-    }
 }
