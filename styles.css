@@ -74,7 +74,15 @@ button.calculator-button{
     font-size: 24px;
 }
 
-#calculator-clear-button{
+#calculator-clear-button, #calculator-backspace-button{
     margin-top: 20px;
-    padding: 5px 0px;
+    padding: 5px 10px;
+    font-family: 'Digital-7', sans-serif;
+    font-size: 18px;
+}
+
+div.calculator-options-container{
+    display: flex;
+    justify-content: center;
+    column-gap: 5px;
 }

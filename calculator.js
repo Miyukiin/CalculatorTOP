@@ -20,6 +20,9 @@ equalsButton[0].addEventListener("click", () => evaluateExpression());
 const clearButton = document.querySelector("button#calculator-clear-button");
 clearButton.addEventListener("click", () => clearCalculatorScreen());
 
+const backSpaceButton = document.querySelector("button#calculator-backspace-button");
+backSpaceButton.addEventListener("click", () => backSpaceFunction())
+
 const buttonsArray = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value !== "=");
 buttonsArray.map((item) => {
     item.addEventListener("click", (e) => {
@@ -77,6 +80,9 @@ document.addEventListener("keydown", (e) => {
         case ".":
             updateCalculatorScreen(".");
             break;
+        case "Backspace":
+            backSpaceFunction();
+            break;
         default:
             return;
 
@@ -84,19 +90,6 @@ document.addEventListener("keydown", (e) => {
 })
 
 // Functions 
-
-function evaluateExpression(){
-    rpnStack = createRPNStack(screenDisplay.textContent);
-    result = evaluateRPNStack(rpnStack);
-    if(result){
-        resultFlag = true;
-    }
-    else{
-        return "ERROR: CANNOT OBTAIN RESULT."
-    }
-    updateCalculatorScreen(result);
-}
-
 function add(a,b){
     return a+b;
 }
@@ -111,73 +104,6 @@ function multiply(a,b){
 
 function divide(a,b){
     return a/b;
-}
-
-
-function evaluateRPNStack(rpnStack){
-    let operandStack = [];
-    let operandOne = null;
-    let operandTwo = null;
-    let result = null;
-    
-    while (rpnStack.length !== 0){
-        // Check if stack item is a number and rpnStack length is > 1, if so, push to operandStack.
-        if(!isNaN(parseFloat(rpnStack[0])) && rpnStack.length > 1){
-            operandStack.push(rpnStack.shift());
-            continue;
-        }
-
-        // Handle case where the number is the last one in the stack.
-        else if(!isNaN(parseFloat(rpnStack[0])) && rpnStack.length == 1){
-            return result;
-        }
-        else{
-            // Pop the last two as operandTwo and operandOne respectively, and get operator.
-            operandTwo = parseFloat(operandStack.pop());
-            operandOne = parseFloat(operandStack.pop());
-            operatorSymbol = rpnStack[0];
-            // Remove Operator from the rpnStack
-            rpnStack.shift()
-            // Evaluate, and add back the result to the rpnStack
-            result = operate(operandOne, operatorSymbol, operandTwo);
-            rpnStack.unshift(String(result));
-        }
-    }
-}
-
-function operate(operandOne, operatorSymbol, operandTwo){
-    switch(operatorSymbol){
-        case("+"):
-            return add(operandOne, operandTwo)
-        case("-"):
-            return subtract(operandOne, operandTwo)
-        case("*"):
-            return multiply(operandOne, operandTwo)
-        case("/"):
-            return divide(operandOne, operandTwo)
-        default:
-            return "Invalid operator."
-    }
-}
-
-function updateCalculatorScreen(textValue){
-    let text = textValue
-
-    if(!typeof textValue === "number" && resultFlag == false){
-        text = parseFloat(textValue);
-    }
-    else if(resultFlag==true){
-        text = " = " + result
-        resetVariables();
-    }
-
-    if(screenDisplay.textContent === "0.0"){
-        screenDisplay.textContent = text;
-    }
-    else{
-        screenDisplay.textContent += text;
-    }
-
 }
 
 function createRPNStack(string){
@@ -232,6 +158,53 @@ function createRPNStack(string){
     return outputQueue;
 }
 
+
+function evaluateRPNStack(rpnStack){
+    let operandStack = [];
+    let operandOne = null;
+    let operandTwo = null;
+    let result = null;
+    
+    while (rpnStack.length !== 0){
+        // Check if stack item is a number and rpnStack length is > 1, if so, push to operandStack.
+        if(!isNaN(parseFloat(rpnStack[0])) && rpnStack.length > 1){
+            operandStack.push(rpnStack.shift());
+            continue;
+        }
+
+        // Handle case where the number is the last one in the stack.
+        else if(!isNaN(parseFloat(rpnStack[0])) && rpnStack.length == 1){
+            return result;
+        }
+        else{
+            // Pop the last two as operandTwo and operandOne respectively, and get operator.
+            operandTwo = parseFloat(operandStack.pop());
+            operandOne = parseFloat(operandStack.pop());
+            operatorSymbol = rpnStack[0];
+            // Remove Operator from the rpnStack
+            rpnStack.shift()
+            // Evaluate, and add back the result to the rpnStack
+            result = operate(operandOne, operatorSymbol, operandTwo);
+            rpnStack.unshift(String(result));
+        }
+    }
+}
+
+function operate(operandOne, operatorSymbol, operandTwo){
+    switch(operatorSymbol){
+        case("+"):
+            return add(operandOne, operandTwo)
+        case("-"):
+            return subtract(operandOne, operandTwo)
+        case("*"):
+            return multiply(operandOne, operandTwo)
+        case("/"):
+            return divide(operandOne, operandTwo)
+        default:
+            return "Invalid operator."
+    }
+}
+
 // Utility Functions
 
 function peekStack(stack){
@@ -249,7 +222,52 @@ function resetVariables(){
     result = null;
 }
 
+function updateCalculatorScreen(textValue){
+    let text = textValue
+
+    if(!typeof textValue === "number" && resultFlag == false){
+        text = parseFloat(textValue);
+    }
+    else if(resultFlag==true){
+        text = " = " + result
+        resetVariables();
+    }
+
+    if(screenDisplay.textContent === "0.0"){
+        screenDisplay.textContent = text;
+    }
+    else{
+        screenDisplay.textContent += text;
+    }
+
+}
+
 function clearCalculatorScreen(){
     screenDisplay.textContent = "0.0";
     resetVariables();
+}
+
+function backSpaceFunction(){
+    // Default number is already displayed.
+    if(screenDisplay.textContent == "0.0"){
+        return;
+    }
+    let text = screenDisplay.textContent;
+    screenDisplay.textContent = text.slice(1, text.length)
+    // If the are no more characters, call clearCalculatorScreen.
+    if(screenDisplay.textContent == ""){
+        clearCalculatorScreen();
+    }
+}
+
+function evaluateExpression(){
+    rpnStack = createRPNStack(screenDisplay.textContent);
+    result = evaluateRPNStack(rpnStack);
+    if(result){
+        resultFlag = true;
+    }
+    else{
+        return "ERROR: CANNOT OBTAIN RESULT."
+    }
+    updateCalculatorScreen(result);
 }
