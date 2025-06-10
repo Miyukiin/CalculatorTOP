@@ -290,7 +290,7 @@ function backSpaceFunction(){
         return;
     }
     let text = screenDisplay.textContent;
-    screenDisplay.textContent = text.slice(1, text.length);
+    screenDisplay.textContent = text.slice(0, text.length - 1);
     console.log(screenDisplay);
 
     // Handle cases where we backspace an operator. Allows operators to be inputted again.
