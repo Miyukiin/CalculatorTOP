@@ -1,4 +1,11 @@
+/*
+To do:
+    1. Consecutive decimal handling. -> check
+    2. Single decimal per operand rule. -> Check
+    3. Refresh everything after result evaluation and user input.
+    4. Division by zero error.
 
+*/
 const orderOfOperationsMap = {
     "*": 2,
     "/": 2,
@@ -11,7 +18,9 @@ let expressionString = null;
 let rpnStack = [];
 let resultFlag = false;
 let result = null;
-let operatorFlag = false;
+let operatorFlag = {value:false}; // Enables pass by reference for checkFlagTrue/ checkFlagFalse functions.
+let decimalFlag = {value:true} // Initially true, prevent decimal as first input.
+let decimalInOperandFlag = {value:false}
 
 const screenDisplay = document.querySelector("div.calculator-screen p");
 
@@ -24,10 +33,13 @@ clearButton.addEventListener("click", () => clearCalculatorScreen());
 const backSpaceButton = document.querySelector("button#calculator-backspace-button");
 backSpaceButton.addEventListener("click", () => backSpaceFunction())
 
-const NumberButtonsArray = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value !== "=" && !operatorsString.includes(item.value));
+const NumberButtonsArray = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> !"=.".includes(item.value) && !operatorsString.includes(item.value));
 NumberButtonsArray.map((item) => {
     item.addEventListener("click", (e) => {
-        checkOperatorFlagTrue();
+        checkFlagTrue(operatorFlag);
+        if(decimalInOperandFlag.value === false){
+            checkFlagTrue(decimalFlag);
+        }
         updateCalculatorScreen(e.currentTarget.value);
     })
 })
@@ -35,69 +47,74 @@ NumberButtonsArray.map((item) => {
 const OperatorButtonsArray = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value !== "=" && operatorsString.includes(item.value));
 OperatorButtonsArray.map((item) => {
     item.addEventListener("click", (e) => {
-        checkOperatorFlagFalse(() => updateCalculatorScreen(e.currentTarget.value));
+        checkFlagFalse(operatorFlag,() => updateCalculatorScreen(e.currentTarget.value));
     })
+})
+
+const decimalButton = Array.from(document.querySelectorAll("button.calculator-button")).filter((item) => item.value === ".");
+decimalButton[0].addEventListener("click", (e) =>{
+    checkFlagFalse(decimalFlag, () => updateCalculatorScreen(e.currentTarget.value));
 })
 
 document.addEventListener("keydown", (e) => {
     switch(e.key){
         case "0":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("0");
             break;
         case "1":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("1");
             break;
         case "2":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("2");
             break;
         case "3":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("3");
             break;
         case "4":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("4");
             break;
         case "5":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("5");
             break;
         case "6":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("6");
             break;
         case "7":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("7");
             break;
         case "8":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("8");
             break;
         case "9":
-            checkOperatorFlagTrue();
+            checkFlagTrue(operatorFlag);
             updateCalculatorScreen("9");
             break;
         case "*":
-            checkOperatorFlagFalse(() => updateCalculatorScreen("*"));
+            checkFlagFalse(operatorFlag,() => updateCalculatorScreen("*"));
             break;
         case "-":
-            checkOperatorFlagFalse(() => updateCalculatorScreen("-"));
+            checkFlagFalse(operatorFlag,() => updateCalculatorScreen("-"));
             break;
         case "+":
-            checkOperatorFlagFalse(() => updateCalculatorScreen("+"));
+            checkFlagFalse(operatorFlag,() => updateCalculatorScreen("+"));
             break;
         case "/":
-            checkOperatorFlagFalse(() => updateCalculatorScreen("/"));
+            checkFlagFalse(operatorFlag,() => updateCalculatorScreen("/"));
             break;
         case "=":
             evaluateExpression();
             break;
         case ".":
-            updateCalculatorScreen(".");
+            checkFlagFalse(decimalFlag,() => updateCalculatorScreen("."));
             break;
         case "Backspace":
             backSpaceFunction();
@@ -225,21 +242,31 @@ function operate(operandOne, operatorSymbol, operandTwo){
 }
 
 // Utility Functions
-function checkOperatorFlagTrue(arrowFunction){
-    if(operatorFlag === true){
-        if(typeof arrowFunction === "function"){
-            arrowFunction();
-        }
-        operatorFlag = false;
+function checkFlagTrue(flag){
+    if(flag.value === true){
+        flag.value = false;
     }
 }
 
-function checkOperatorFlagFalse(arrowFunction){
-    if(operatorFlag === false){
+function checkFlagFalse(flag, arrowFunction){
+    // Prevent multiple decimal points in a single operand value.
+    if (flag === decimalFlag && decimalInOperandFlag.value === true){
+        return;
+    }
+
+    if(flag.value === false){
         if(typeof arrowFunction === "function"){
             arrowFunction();
+            // Set decimalInOperandFlag value to true after successful decimal input, and false after successful operator input.
+            if (flag === decimalFlag){
+                decimalInOperandFlag.value = true;
+            }
+            else if(flag === operatorFlag && decimalInOperandFlag.value === true){
+                decimalInOperandFlag.value = false;
+                decimalFlag.value = true; // Prevent immediate decimal input after an operator.
+            }
         }
-        operatorFlag = true;
+        flag.value = true;
     }
 }
 
@@ -254,15 +281,16 @@ function getPrecedence(char){
 function resetVariables(){
     expressionString = null;
     rpnStack = [];
-    resultFlag = false;
     result = null;
-    operatorFlag = false;
+    operatorFlag.value = false;
+    decimalFlag.value = true;
+    decimalInOperandFlag.value = false;
 }
 
 function updateCalculatorScreen(textValue){
     let text = textValue
 
-    if(!typeof textValue === "number" && resultFlag == false){
+    if(!typeof parseFloat(textValue) === "number" && resultFlag == false){
         text = parseFloat(textValue);
     }
     else if(resultFlag==true){
@@ -291,12 +319,18 @@ function backSpaceFunction(){
     }
     let text = screenDisplay.textContent;
     screenDisplay.textContent = text.slice(0, text.length - 1);
-    console.log(screenDisplay);
 
     // Handle cases where we backspace an operator. Allows operators to be inputted again.
     if(operatorsString.includes(text[text.length - 1])){
-        checkOperatorFlagTrue();
+        checkFlagTrue(operatorFlag);
     }
+
+    // Handle cases where we backspace a decimal within an operand.
+    if(".".includes(text[text.length - 1])){
+        checkFlagTrue(decimalFlag);
+        decimalInOperandFlag.value = false;
+    }
+
     // If the are no more characters, call clearCalculatorScreen.
     if(screenDisplay.textContent == ""){
         clearCalculatorScreen();
