@@ -2,7 +2,7 @@
 To do:
     1. Consecutive decimal handling. -> check
     2. Single decimal per operand rule. -> Check
-    3. Refresh everything after result evaluation and user input.
+    3. Refresh everything after result evaluation and user input. -> Check
     4. Division by zero error.
 
 */
@@ -293,8 +293,14 @@ function updateCalculatorScreen(textValue){
     if(!typeof parseFloat(textValue) === "number" && resultFlag == false){
         text = parseFloat(textValue);
     }
-    else if(resultFlag==true){
-        text = " = " + result
+    else if(resultFlag===true){
+        // User inputs after a previous result evaluation.
+        if(result === null){
+            text ? screenDisplay.textContent = text : screenDisplay.textContent = "0.0";
+            resultFlag = false;
+            return;
+        }
+        text = " = " + result;
         resetVariables();
     }
 
@@ -313,6 +319,10 @@ function clearCalculatorScreen(){
 }
 
 function backSpaceFunction(){
+    if (resultFlag === true){
+        updateCalculatorScreen()
+    }
+
     // Default number is already displayed.
     if(screenDisplay.textContent == "0.0"){
         return;
