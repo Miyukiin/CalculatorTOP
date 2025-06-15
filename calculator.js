@@ -3,7 +3,9 @@ To do:
     1. Consecutive decimal handling. -> check
     2. Single decimal per operand rule. -> Check
     3. Refresh everything after result evaluation and user input. -> Check
-    4. Division by zero error.
+    4. Division by zero error. -> Check
+    5. Disable consecutive equals operation. -> Check
+    6. Single operand evaluation.
 
 */
 const orderOfOperationsMap = {
@@ -16,16 +18,16 @@ const operatorsString = "*/+-";
 
 let expressionString = null;
 let rpnStack = [];
-let resultFlag = false;
+let resultFlag ={value:false};
 let result = null;
 let operatorFlag = {value:false}; // Enables pass by reference for checkFlagTrue/ checkFlagFalse functions.
-let decimalFlag = {value:true} // Initially true, prevent decimal as first input.
-let decimalInOperandFlag = {value:false}
+let decimalFlag = {value:true}; // Initially true, prevent decimal as first input.
+let decimalInOperandFlag = {value:false};
 
 const screenDisplay = document.querySelector("div.calculator-screen p");
 
 const equalsButton = Array.from(document.querySelectorAll("button.calculator-button")).filter((item)=> item.value == "=");
-equalsButton[0].addEventListener("click", () => evaluateExpression());
+equalsButton[0].addEventListener("click", () => checkFlagFalse(resultFlag, () => evaluateExpression()));
 
 const clearButton = document.querySelector("button#calculator-clear-button");
 clearButton.addEventListener("click", () => clearCalculatorScreen());
@@ -111,7 +113,7 @@ document.addEventListener("keydown", (e) => {
             checkFlagFalse(operatorFlag,() => updateCalculatorScreen("/"));
             break;
         case "=":
-            evaluateExpression();
+            checkFlagFalse(resultFlag,() => evaluateExpression());
             break;
         case ".":
             checkFlagFalse(decimalFlag,() => updateCalculatorScreen("."));
@@ -221,6 +223,9 @@ function evaluateRPNStack(rpnStack){
             rpnStack.shift()
             // Evaluate, and add back the result to the rpnStack
             result = operate(operandOne, operatorSymbol, operandTwo);
+            if (result === "Division Error" || result === "Invalid Operator"){
+                return result;
+            }
             rpnStack.unshift(String(result));
         }
     }
@@ -235,9 +240,9 @@ function operate(operandOne, operatorSymbol, operandTwo){
         case("*"):
             return multiply(operandOne, operandTwo)
         case("/"):
-            return divide(operandOne, operandTwo)
+            return operandTwo === 0.0 && operatorSymbol === "/" ? "Division Error" : divide(operandOne, operandTwo);
         default:
-            return "Invalid operator."
+            return "Invalid operator"
     }
 }
 
@@ -290,14 +295,20 @@ function resetVariables(){
 function updateCalculatorScreen(textValue){
     let text = textValue
 
-    if(!typeof parseFloat(textValue) === "number" && resultFlag == false){
+    if(!typeof parseFloat(textValue) === "number" && resultFlag.value == false){
         text = parseFloat(textValue);
     }
-    else if(resultFlag===true){
+    else if(textValue === "Division Error" || textValue === "Invalid Operator"){
+        screenDisplay.textContent = textValue;
+        resultFlag.value = true;
+        resetVariables();
+        return;
+    }
+    else if(resultFlag.value===true){
         // User inputs after a previous result evaluation.
         if(result === null){
             text ? screenDisplay.textContent = text : screenDisplay.textContent = "0.0";
-            resultFlag = false;
+            resultFlag.value = false;
             return;
         }
         text = " = " + result;
@@ -319,7 +330,7 @@ function clearCalculatorScreen(){
 }
 
 function backSpaceFunction(){
-    if (resultFlag === true){
+    if (resultFlag.value === true){
         updateCalculatorScreen()
     }
 
@@ -350,11 +361,8 @@ function backSpaceFunction(){
 function evaluateExpression(){
     rpnStack = createRPNStack(screenDisplay.textContent);
     result = evaluateRPNStack(rpnStack);
-    if(result){
-        resultFlag = true;
-    }
-    else{
-        return "ERROR: CANNOT OBTAIN RESULT."
+    if(result && (result !== "Division Error" && result !== "Invalid Operator")){
+        resultFlag.value = true;
     }
     updateCalculatorScreen(result);
 }
